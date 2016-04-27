@@ -33,7 +33,7 @@ public class CookieTestVerticle extends AbstractVerticle {
 		router.route().handler(BodyHandler.create().setMergeFormAttributes(false));
 		router.route().handler(CookieHandler.create());
 		
-		router.route().handler(new CookieSesssionHandler("MyPassword").setSessionTimeout(1000000));
+		router.route().handler(new CookieSesssionHandler("MyPassword"));
 		
 	
 		router.route(HttpMethod.GET, "/count").handler(context ->{
