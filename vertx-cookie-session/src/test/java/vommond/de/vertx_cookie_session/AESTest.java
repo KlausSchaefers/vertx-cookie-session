@@ -12,8 +12,8 @@ public class AESTest {
 
 	
 	@Test
-	public void test() throws Exception{
-		log.info("test() > enter");
+	public void testWeak() throws Exception{
+		log.info("testWeak() > enter");
 		
 		
 		AESEncryptor aes = new AESEncryptor("123123123","mysalt", 128);
@@ -26,7 +26,25 @@ public class AESTest {
 		
 		log.info("# "  + encrypted.length() + " from " +txt.length());
 		
-		log.info("test() > exit");
+		log.info("testWeak() > exit");
 	}
 
+	
+	@Test
+	public void testStrong() throws Exception{
+		log.info("testStrong() > enter");
+		
+		
+		AESEncryptor aes = new AESEncryptor("123123123","mysalt", 256);
+		
+		String txt ="Papa Smurf is blue";
+		String encrypted = aes.encrypt(txt);
+		String decrypted = aes.decrypt(encrypted);
+		
+		Assert.assertEquals(decrypted, txt);
+		
+		log.info("# "  + encrypted.length() + " from " +txt.length());
+		
+		log.info("testStrong() > exit");
+	}
 }

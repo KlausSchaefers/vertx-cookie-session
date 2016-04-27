@@ -1,5 +1,6 @@
 package vommond.de.vertx_cookie_session;
 
+import java.lang.reflect.Field;
 import java.security.spec.KeySpec;
 
 import javax.crypto.Cipher;
@@ -23,6 +24,16 @@ public class AESEncryptor {
 	private Cipher ecipher;
 
 	private Cipher dcipher;
+	
+	static {
+	    try {
+	        Field field = Class.forName("javax.crypto.JceSecurity").getDeclaredField("isRestricted");
+	        field.setAccessible(true);
+	        field.set(null, java.lang.Boolean.FALSE);
+	    } catch (Exception ex) {
+	    	ex.printStackTrace();
+	    }
+	}
 
 	public AESEncryptor(String passPhrase, String salt, int key_length) throws Exception {
 		
