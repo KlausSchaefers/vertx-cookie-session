@@ -2,10 +2,6 @@ package vommond.de.vertx_cookie_session;
 
 import java.io.IOException;
 
-import com.google.common.base.Charsets;
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
-
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Cookie;
@@ -26,34 +22,32 @@ public class CookieSesssionHandler implements SessionHandler {
 
 	private static final Logger log = LoggerFactory.getLogger(CookieSesssionHandler.class);
 
-	private AESEncryptor aes;
+	private final CookieEncryptor encryptor;
 
-	private String sessionCookieName = "VertxSessionCookie";
+	private String sessionCookieName = "MatcSessionCookie"; // Name cannot start with Vertx apprently
 
-	private long sessionTimeout = 30 * 1000 * 60;;
+	// IN MS
+	private long sessionTimeout = 24 * 3600 * 1000;
 
 	private boolean sessionCookieSecure = false;
 
-	private boolean sessionCookieHttpOnly = false;
+	private boolean sessionCookieHttpOnly = true;
 
-	private CookieSerializer serializer = new KryoBase64Serializer();
+	private CookieSerializer serializer = new KryoBase64ZipSerializer();
 
 	public CookieSesssionHandler(String password) throws Exception {
-		this(password, 128);
+		this(password, -1);
 	}
 
-	public CookieSesssionHandler(String password, int keySize) throws Exception {
-
+	public CookieSesssionHandler(String password, long timeout) throws Exception {
+		log.error("CookieSesssionHandler() > Set timeout " + timeout);
 		try{
-			HashFunction hf = Hashing.sha256();
-			String salt = hf.hashString(password, Charsets.UTF_8).toString();
-			aes = new AESEncryptor(password, salt, keySize);
-
+			this.encryptor = new JasyptEncryptor(password);
+			this.sessionTimeout = timeout;
 		} catch(Exception e){
-			log.error("constructor() > Could not init AES. Check if you have installed Java JCE if keySize is larger 128 ");
-			throw new Exception("Could not init AES", e);
+			log.error("constructor() > Could not init Encryptor. Check if you have installed Java JCE if keySize is larger 128 ");
+			throw new Exception("Could not init Encryptor", e);
 		}
-	
 	}
 
 	public CookieSesssionHandler setZipped() {
@@ -69,7 +63,6 @@ public class CookieSesssionHandler implements SessionHandler {
 
 	@Override
 	public SessionHandler setNagHttps(boolean nag) {
-
 		return this;
 	}
 
@@ -93,28 +86,30 @@ public class CookieSesssionHandler implements SessionHandler {
 
 	@Override
 	public void handle(RoutingContext context) {
-
+		log.debug("handle() > enter > " + context.request().absoluteURI());
 		context.response().ended();
 
-		CookieSession session = readSession(context);
-
-		if (session == null || isDestroyedOrTimedOut(session)) {
-			createNewSession(context);
-			context.next();
-		} else {
-			context.setSession(session);
-			session.setAccessed();
+		try{
+			CookieSession session = readSession(context);
+	
+			if (session == null || session.isDestroyed() || session.isExpired()) {
+				createNewSession(context);
+				context.next();
+			} else {
+				context.setSession(session);
+				session.setAccessed();
+				context.next();
+			}
+		} catch(Exception e){
+			e.printStackTrace();
 			context.next();
 		}
 
 	}
 
-	private boolean isDestroyedOrTimedOut(CookieSession session) {
-		return session.isDestroyed() || ((session.lastAccessed() + session.timeout()) < System.currentTimeMillis());
-	}
 
 	private void createNewSession(RoutingContext context) {
-		
+		log.info("createNewSession() > enter " + context.request().absoluteURI());
 		CookieSession session = new CookieSession(sessionTimeout);
 		session.setAccessed();
 		session.onchange(data -> {
@@ -124,12 +119,18 @@ public class CookieSesssionHandler implements SessionHandler {
 		context.setSession(session);
 
 		/**
-		 * Make sure to save once
+		 * Make sure to save once. Dunno why
 		 */
+		session.put("created", System.currentTimeMillis());
 		session.save();
+		
 		Cookie cookie = Cookie.cookie(sessionCookieName, "");
 		cookie.setPath("/");
 		cookie.setSecure(sessionCookieSecure);
+		if (this.sessionTimeout > 0 ){
+			log.info("createNewSession() > set timeout");
+			cookie.setMaxAge(sessionTimeout / 1000);
+		}
 		cookie.setHttpOnly(sessionCookieHttpOnly);
 		context.addCookie(cookie);
 	
@@ -150,10 +151,9 @@ public class CookieSesssionHandler implements SessionHandler {
 	 * 			The RoutingContext
 	 */
 	public void writeSession(CookieSessionData session, RoutingContext context) {
-
+		log.info("writeSession() > " + context.request().absoluteURI());
 		Cookie cookie = context.getCookie(sessionCookieName);
 		if (cookie != null) {
-
 			try {
 				/**
 				 * 1) serialize the session data
@@ -162,7 +162,7 @@ public class CookieSesssionHandler implements SessionHandler {
 				/**
 				 * 2) encrypt the date
 				 */
-				String encrpyted = aes.encrypt(value);
+				String encrpyted = encryptor.encrypt(value);
 				/**
 				 * 3) store in cookie
 				 */
@@ -170,9 +170,16 @@ public class CookieSesssionHandler implements SessionHandler {
 					log.error("writeSession() > Session data to big for cookie");
 					return;
 				}
-				cookie.setValue(encrpyted);
+				
+				cookie = Cookie.cookie(sessionCookieName, encrpyted);
+				cookie.setPath("/");
+				cookie.setSecure(sessionCookieSecure);
+				cookie.setHttpOnly(sessionCookieHttpOnly);
+				context.addCookie(cookie);
+				log.debug("writeSession() > exit > " + encrpyted.length());
 			} catch (Exception e) {
 				log.error("writeSession()", e);
+				log.equals("writeSession() > error " + context.request().absoluteURI());
 			}
 		}
 	}
@@ -196,25 +203,34 @@ public class CookieSesssionHandler implements SessionHandler {
 				 * 1) Read value form cookie
 				 */
 				String value = cookie.getValue();
-
-				/**
-				 * 2) Decrypt value to new string
-				 */
-				String decrypted = aes.decrypt(value);
+				if (value != null && !value.isEmpty()){
+					/**
+					 * 2) Decrypt value to new string
+					 */
+					try{
+						String decrypted = encryptor.decrypt(value);
+						
+						/**
+						 * Deserialize value
+						 */
+						CookieSessionData sessionData = read(decrypted);
+						session = new CookieSession(sessionData);
+						session.onchange(data -> {
+							writeSession(data, context);
+						});
+					} catch(Exception e) {
+						log.error("readSession() > Error: Wrong string", e);
+						log.error("readSession() > ", value);
+					}
+				} else {
+					log.info("readSession() > Cookie is empty");
+				}
 				
-				/**
-				 * Deserialize value
-				 */
-				session = new CookieSession(read(decrypted));
-				session.onchange(data -> {
-					writeSession(data, context);
-				});
 			} catch (Exception e) {
 				log.error("readSession()", e);
 			}
-
 		}  else {
-			System.out.println("No cookie");
+			log.info("readSession() > No Cookie");
 		}
 
 		return session;
@@ -227,6 +243,11 @@ public class CookieSesssionHandler implements SessionHandler {
 
 	private CookieSessionData read(String value) throws IOException {
 		return this.serializer.read(value);
+	}
+
+	@Override
+	public SessionHandler setMinLength(int minLength) {
+		return this;
 	}
 
 }

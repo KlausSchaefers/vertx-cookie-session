@@ -73,7 +73,7 @@ public class CookieSessionData implements Session{
 	@Override
 	public void destroy() {
 		destroyed = true;
-		data = null;
+		data.clear();
 	}
 
 	@Override
@@ -93,5 +93,23 @@ public class CookieSessionData implements Session{
 	public String toString() {
 		return "CookieSessionData [id=" + id + ", timeout=" + timeout + ", data=" + data + ", lastAccessed="
 				+ lastAccessed + ", destroyed=" + destroyed + "]";
+	}
+
+	@Override
+	public Session regenerateId() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isRegenerated() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public String oldId() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

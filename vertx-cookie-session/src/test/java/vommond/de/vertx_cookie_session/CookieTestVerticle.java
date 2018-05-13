@@ -12,8 +12,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.Session;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CookieHandler;
-import io.vertx.ext.web.handler.impl.JWTAuthHandlerImpl;
-
+import io.vertx.ext.web.handler.StaticHandler;
 
 public class CookieTestVerticle extends AbstractVerticle {
 	
@@ -50,6 +49,22 @@ public class CookieTestVerticle extends AbstractVerticle {
 	
 
 			context.response().end("{\"count\": " +  count +"}");
+		});
+		
+		router.route(HttpMethod.GET, "/logout").handler(context ->{
+			Session s = context.session();
+			s.destroy();
+			context.response().end("{\"count\": " +  -1 +"}");
+		});
+		
+		StaticHandler handler = StaticHandler.create();
+		
+		router.route().handler(handler).failureHandler(frc -> {
+			if(frc.failure()!=null){
+				frc.failure().printStackTrace();
+			} else {
+				logger.debug("StaticHandler.default > " + frc.request().path());
+			}
 		});
 		
 

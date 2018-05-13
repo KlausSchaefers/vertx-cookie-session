@@ -17,7 +17,7 @@ public class CookieSerializationTest {
 		
 		KryoBase64Serializer handler = new KryoBase64Serializer();
 		
-		CookieSessionData data = new CookieSessionData();
+		CookieSessionData data = new CookieSessionData(1000);
 		data.setAccessed();
 		data.put("user", new CookieUser("Papa@smurf.io", "Papa", "Smurf"));
 		
@@ -37,7 +37,7 @@ public class CookieSerializationTest {
 		
 		KryoBase64ZipSerializer handler = new KryoBase64ZipSerializer();
 		
-		CookieSessionData data = new CookieSessionData();
+		CookieSessionData data = new CookieSessionData(1000);
 		data.setAccessed();
 		data.put("user", new CookieUser("Papa@smurf.io", "Papa", "Smurf"));
 		

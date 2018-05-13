@@ -32,6 +32,14 @@ public class CookieSession implements Session {
 	public CookieSessionData getPayLoad(){
 		return payload;
 	}
+	
+	public boolean isExpired(){
+		if (this.payload.timeout() > 0) {
+			long now = System.currentTimeMillis();
+			return (now - this.payload.lastAccessed() > this.payload.timeout());
+		}
+		return false;
+	}
 
 	@Override
 	public String id() {
@@ -76,8 +84,11 @@ public class CookieSession implements Session {
 
 	@Override
 	public void setAccessed() {
-		this.payload.setAccessed();
-		this.save();
+		// Avoid not needed writes to cookie...
+		if (this.payload.timeout() > 0) {
+			this.payload.setAccessed();
+			this.save();
+		}
 	}
 
 	@Override
@@ -100,8 +111,27 @@ public class CookieSession implements Session {
 	}
 	
 	public void save(){
+		// TODO: check if dirty
 		if(this.handler != null){
 			handler.handle(this.payload);
 		}
+	}
+
+	@Override
+	public Session regenerateId() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isRegenerated() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public String oldId() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

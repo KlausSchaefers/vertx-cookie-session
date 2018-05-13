@@ -2,17 +2,17 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>vommond.de</groupId>
+	<groupId>de.vommond</groupId>
 	<artifactId>vertx-cookie-session</artifactId>
-	<version>1.0</version>
-	<packaging>jar</packaging>
+	<version>1.0.0</version>
+
 
 	<name>vertx-cookie-session</name>
 	<url>http://maven.apache.org</url>
 
 
 	<properties>
-		<vertx.version>3.2.1</vertx.version>
+		<vertx.version>3.4.0</vertx.version>
 		<log4j2.version>2.3</log4j2.version>
 	</properties>
 
@@ -22,6 +22,12 @@
 			<groupId>com.esotericsoftware</groupId>
 			<artifactId>kryo-shaded</artifactId>
 			<version>3.0.3</version>
+		</dependency>
+
+		<dependency>
+		    <groupId>commons-codec</groupId>
+		    <artifactId>commons-codec</artifactId>
+		    <version>1.9</version>
 		</dependency>
 
 		<dependency>
@@ -35,6 +41,13 @@
 			<artifactId>vertx-unit</artifactId>
 			<version>${vertx.version}</version>
 		</dependency>
+		
+		<dependency>
+		    <groupId>org.jasypt</groupId>
+		    <artifactId>jasypt</artifactId>
+		    <version>1.9.2</version>
+		</dependency>
+		
 
 
 		<dependency>
@@ -42,7 +55,7 @@
 			<artifactId>vertx-web</artifactId>
 			<version>${vertx.version}</version>
 		</dependency>
-
+		
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -58,19 +71,11 @@
 			<scope>test</scope>
 		</dependency>
 
-		
-
-
-
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 			<version>18.0</version>
-		
 		</dependency>
-
-
-
 
 
 		<dependency>
@@ -97,18 +102,6 @@
 			<version>${log4j2.version}</version>
 		</dependency>
 
-
-		<dependency>
-			<groupId>com.hazelcast</groupId>
-			<artifactId>hazelcast</artifactId>
-			<version>3.4</version>
-			<exclusions>
-				<exclusion>
-					<groupId>net.sourceforge.findbugs</groupId>
-					<artifactId>annotations</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
 
 	</dependencies>
 

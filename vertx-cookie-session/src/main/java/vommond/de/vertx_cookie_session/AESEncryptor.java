@@ -3,6 +3,7 @@ package vommond.de.vertx_cookie_session;
 import java.lang.reflect.Field;
 import java.security.spec.KeySpec;
 
+
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
@@ -10,14 +11,15 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Hex;
+
 
 /**
  * 
  * @author Klaus Schaefers
  *
  */
-public class AESEncryptor {
+public class AESEncryptor implements CookieEncryptor{
 
 	private static final int ITERATION_COUNT = 65536;
 	
@@ -53,7 +55,8 @@ public class AESEncryptor {
 	public String encrypt(String encrypt) throws Exception {
 		byte[] bytes = encrypt.getBytes("UTF8");
 		byte[] encrypted = encrypt(bytes);
-		return Base64.encodeBase64String(encrypted);
+		return Hex.encodeHexString(encrypted);
+		//return Base64.getUrlEncoder().encodeToString(encrypted);
 	}
 
 	public byte[] encrypt(byte[] plain) throws Exception {
@@ -61,7 +64,8 @@ public class AESEncryptor {
 	}
 
 	public String decrypt(String encrypt) throws Exception {
-		byte[] bytes = Base64.decodeBase64(encrypt);
+	
+		byte[] bytes = Hex.decodeHex(encrypt.toCharArray());
 		byte[] decrypted = decrypt(bytes);
 		return new String(decrypted, "UTF8");
 	}

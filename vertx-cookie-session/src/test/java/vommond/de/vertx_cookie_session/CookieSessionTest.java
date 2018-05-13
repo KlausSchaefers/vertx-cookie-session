@@ -4,16 +4,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.concurrent.CountDownLatch;
 
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.params.CookiePolicy;
-import org.apache.http.cookie.CookieSpec;
-import org.apache.http.cookie.CookieSpecProvider;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.protocol.HttpContext;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,7 +26,6 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.*;
 
 @RunWith(VertxUnitRunner.class)
 public class CookieSessionTest {
@@ -65,6 +60,18 @@ public class CookieSessionTest {
 		
 		count = get("/count");
 		Assert.assertEquals(2, count.getInteger("count").intValue());
+		
+		count = get("/count");
+		Assert.assertEquals(3, count.getInteger("count").intValue());
+		
+		count = get("/count");
+		Assert.assertEquals(4, count.getInteger("count").intValue());
+		
+		count = get("/logout");
+		Assert.assertEquals(-1, count.getInteger("count").intValue());
+		
+		count = get("/count");
+		Assert.assertEquals(1, count.getInteger("count").intValue());
 		
 		log.info("testSession() > exit");
 	}
